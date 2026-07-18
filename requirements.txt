@@ -1,0 +1,4 @@
+pytest
+Flask
+fastapi
+uvicorn[standard]
