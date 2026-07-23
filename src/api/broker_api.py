@@ -6,7 +6,7 @@ REST API эндпоинты для Broker.
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
-from broker import Broker, Order, OrderExecutionError
+from src.broker_engine.broker import Broker, Order, OrderExecutionError
 
 
 # ===== Pydantic модели для ответов =====
