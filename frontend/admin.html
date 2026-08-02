@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            padding: 15px;
+            background: #f9f9f9;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            user-select: none;
+        }
+
+        .section-header:hover {
+            background: #f0f0f0;
+        }
+
+        .section-header .toggle {
+            font-size: 18px;
+            color: #666;
+            transition: transform 0.3s;
+        }
+
+        .section-header.collapsed .toggle {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 20px;
+            display: none;
+        }
+
+        .section-content.visible {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 3px solid #dc3545;
+        }
+
+        .stat-box.info {
+            border-left-color: #17a2b8;
+        }
+
+        .stat-box.warning {
+            border-left-color: #ffc107;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        button.start {
+            background: #28a745;
+        }
+
+        button.start:hover {
+            background: #218838;
+        }
+
+        button.stop {
+            background: #dc3545;
+        }
+
+        button.stop:hover {
+            background: #c82333;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #1a1a1a;
+            box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.1);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            padding: 0;
+        }
+
+        .slider-value {
+            min-width: 50px;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.normal {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .liquidation-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .liquidation-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            background: #fff5f5;
+        }
+
+        .liquidation-item:last-child {
+            border-bottom: none;
+        }
+
+        .liquidation-user {
+            font-weight: 600;
+            color: #dc3545;
+        }
+
+        .liquidation-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Trading Simulator - Admin</h1>
+        <div class="status-bar">
+            <span id="simulationStatus">Status: Loading...</span>
+            <span id="tickInfo">Tick: -</span>
+            <span id="indexInfo">Index: -</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Управление симуляцией -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>Simulation Control</span>
+                <span class="toggle">></span>
+            </div>
+            <div class="section-content visible">
+                <div class="grid">
+                    <div class="stat-box info">
+                        <div class="stat-label">Current Status</div>
+                        <div class="stat-value" id="statusText">-</div>
+                    </div>
+                    <div class="stat-box info">
+                        <div class="stat-label">Current Tick</div>
+                        <div class="stat-value" id="tickCounter">0</div>
+                    </div>
+                    <div class="stat-box info">
+                        <div class="stat-label">Index Price</div>
+                        <div class="stat-value" id="indexPrice">0.00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Active Accounts</div>
+                        <div class="stat-value" id="totalAccounts">0</div>
+                    </div>
+                </div>
+
+                <div class="control-buttons">
+                    <button class="start" onclick="startSimulation()">Start</button>
+                    <button class="stop" onclick="pauseSimulation()">Pause</button>
+                    <button onclick="resetSimulation()">Reset</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Tick Speed (seconds)</label>
+                    <div class="slider-container">
+                        <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="0.5" onchange="updateSpeed()">
+                        <span class="slider-value" id="speedValue">0.5s</span>
+                    </div>
+                </div>
+
+                <div id="controlAlert"></div>
+            </div>
+        </div>
+
+        <!-- Мониторинг пользователей -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>User Monitoring</span>
+                <span class="toggle">></span>
+            </div>
+            <div class="section-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Equity</th>
+                            <th>Cash</th>
+                            <th>UDS</th>
+                            <th>Status</th>
+                            <th>Daily PnL</th>
+                            <th>Total PnL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #999;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Ликвидации -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>Liquidations Feed</span>
+                <span class="toggle">></span>
+            </div>
+            <div class="section-content">
+                <div class="liquidation-list" id="liquidationsList">
+                    <div style="padding: 20px; text-align: center; color: #999;">No liquidations</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управление событиями -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>Event Management</span>
+                <span class="toggle">></span>
+            </div>
+            <div class="section-content">
+                <h3 style="margin-bottom: 15px; font-size: 14px;">Active Events</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Target</th>
+                            <th>Impact</th>
+                            <th>Remaining Ticks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventsTable">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #999;">No events</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 style="margin-top: 30px; margin-bottom: 15px; font-size: 14px;">Inject New Event</h3>
+                <div class="form-group">
+                    <div class="form-row">
+                        <div>
+                            <label>Event Name</label>
+                            <input type="text" id="eventName" placeholder="e.g., Market crash">
+                        </div>
+                        <div>
+                            <label>Event Type</label>
+                            <select id="eventType" onchange="updateEventTypeFields()">
+                                <option value="news">News (Volatility/Profit)</option>
+                                <option value="trend">Trend (Price Direction)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- News Event Fields -->
+                <div id="newsEventFields">
+                    <div class="form-group">
+                        <div class="form-row">
+                            <div>
+                                <label>Target Type</label>
+                                <select id="targetType" onchange="updateTargetField()">
+                                    <option value="company">Company</option>
+                                    <option value="sector">Sector</option>
+                                    <option value="market">Market</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Target</label>
+                                <select id="targetField">
+                                    <option value="GIGA">GIGA</option>
+                                    <option value="PWR">PWR</option>
+                                    <option value="BANK">BANK</option>
+                                    <option value="FOOD">FOOD</option>
+                                    <option value="PHARMA">PHARMA</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div>
+                                <label>Profit Impact</label>
+                                <input type="number" id="impactProfit" value="1.0" step="0.1">
+                            </div>
+                            <div>
+                                <label>Volatility Impact</label>
+                                <input type="number" id="impactVol" value="1.0" step="0.1">
+                            </div>
+                            <div>
+                                <label>Duration (ticks)</label>
+                                <input type="number" id="eventDuration" value="24" min="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trend Event Fields -->
+                <div id="trendEventFields" style="display: none;">
+                    <div class="form-group">
+                        <div class="form-row">
+                            <div>
+                                <label>Target Ticker</label>
+                                <select id="eventTarget">
+                                    <option value="GIGA">GIGA</option>
+                                    <option value="PWR">PWR</option>
+                                    <option value="BANK">BANK</option>
+                                    <option value="FOOD">FOOD</option>
+                                    <option value="PHARMA">PHARMA</option>
+                                    <option value="MARKET">Entire Market</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Direction</label>
+                                <select id="trendDirection">
+                                    <option value="UP">UP</option>
+                                    <option value="DOWN">DOWN</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Strength (0.0-1.0)</label>
+                                <input type="number" id="trendStrength" value="0.5" step="0.1" min="0" max="1">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div>
+                                <label>Duration (ticks)</label>
+                                <input type="number" id="eventDuration" value="24" min="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="injectEvent()">Inject Event</button>
+                <div id="eventAlert"></div>
+            </div>
+        </div>
+
+        <!-- Корректировка балансов -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>Balance Adjustment</span>
+                <span class="toggle">></span>
+            </div>
+            <div class="section-content">
+                <div class="form-group">
+                    <div class="form-row">
+                        <div>
+                            <label>Username</label>
+                            <select id="adjustUser"></select>
+                        </div>
+                        <div>
+                            <label>Amount ($)</label>
+                            <input type="number" id="adjustAmount" placeholder="Positive or negative">
+                        </div>
+                        <div>
+                            <label>Reason</label>
+                            <input type="text" id="adjustReason" placeholder="Admin fee, bonus, etc.">
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button onclick="adjustBalance()">Adjust</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="adjustAlert"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:8000";
+        let ws = null;
+        let liquidations = [];
+
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            header.classList.toggle("collapsed");
+            content.classList.toggle("visible");
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket("ws://localhost:8000/ws");
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                updateStatus(data);
+            };
+
+            ws.onerror = () => {
+                console.error("WebSocket error");
+            };
+
+            ws.onclose = () => {
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        async function updateStatus(data) {
+            if (data.tick) {
+                document.getElementById("tickCounter").textContent = data.tick;
+                document.getElementById("tickInfo").textContent = `Tick: ${data.tick}`;
+            }
+
+            if (data.index_price) {
+                document.getElementById("indexPrice").textContent = `$${data.index_price.toFixed(2)}`;
+                document.getElementById("indexInfo").textContent = `Index: $${data.index_price.toFixed(2)}`;
+            }
+
+            if (data.liquidations && Object.keys(data.liquidations).length > 0) {
+                addLiquidations(data.liquidations);
+            }
+        }
+
+        async function fetchStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/status`);
+                const data = await res.json();
+
+                document.getElementById("statusText").textContent = data.is_running ? "Running" : "Paused";
+                document.getElementById("tickCounter").textContent = data.tick_count;
+                document.getElementById("indexPrice").textContent = `$${data.index_price.toFixed(2)}`;
+                document.getElementById("totalAccounts").textContent = data.total_accounts;
+                document.getElementById("simulationStatus").textContent = `Status: ${data.is_running ? "Running" : "Paused"}`;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function fetchUsers() {
+            try {
+                const res = await fetch(`${API_BASE}/api/broker/accounts`);
+                const data = await res.json();
+
+                const tbody = document.getElementById("usersTable");
+                const userSelect = document.getElementById("adjustUser");
+
+                tbody.innerHTML = data.accounts.map(a => `
+                    <tr>
+                        <td>${a.username}</td>
+                        <td>$${a.balances.portfolio_value_current.toFixed(2)}</td>
+                        <td>$${a.balances.cash.toFixed(2)}</td>
+                        <td>${a.uds.toFixed(2)}</td>
+                        <td><span class="status-badge ${getStatusClass(a.uds_status)}">${a.uds_status}</span></td>
+                        <td>$${a.pnl.daily_pnl.toFixed(2)}</td>
+                        <td>$${a.pnl.total_pnl.toFixed(2)}</td>
+                    </tr>
+                `).join("");
+
+                const options = data.accounts.map(a => `<option value="${a.username}">${a.username}</option>`).join("");
+                userSelect.innerHTML = options;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function fetchEvents() {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/events`);
+                const data = await res.json();
+
+                const tbody = document.getElementById("eventsTable");
+                if (data.events.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">No events</td></tr>';
+                } else {
+                    tbody.innerHTML = data.events.map(e => `
+                        <tr>
+                            <td>${e.name}</td>
+                            <td>${e.target}</td>
+                            <td>${e.impact_profit.toFixed(2)}x</td>
+                            <td>${e.ticks_remaining}</td>
+                        </tr>
+                    `).join("");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function getStatusClass(status) {
+            if (status === "NORMAL") return "normal";
+            if (status === "WARNING") return "warning";
+            return "danger";
+        }
+
+        function updateTargetField() {
+            const type = document.getElementById("targetType").value;
+            const field = document.getElementById("targetField");
+
+            if (type === "market") {
+                field.innerHTML = '<option value="MARKET">MARKET</option>';
+            } else {
+                field.innerHTML = `
+                    <option value="GIGA">GIGA</option>
+                    <option value="PWR">PWR</option>
+                    <option value="BANK">BANK</option>
+                    <option value="FOOD">FOOD</option>
+                    <option value="PHARMA">PHARMA</option>
+                `;
+            }
+        }
+
+        async function startSimulation() {
+            try {
+                await fetch(`${API_BASE}/api/admin/start`, { method: "POST" });
+                fetchStatus();
+            } catch (e) {
+                showAlert("controlAlert", "Error starting simulation", "error");
+            }
+        }
+
+        async function pauseSimulation() {
+            try {
+                await fetch(`${API_BASE}/api/admin/pause`, { method: "POST" });
+                fetchStatus();
+            } catch (e) {
+                showAlert("controlAlert", "Error pausing simulation", "error");
+            }
+        }
+
+        async function resetSimulation() {
+            if (!confirm("Are you sure? This will delete all state.")) return;
+            
+            try {
+                await fetch(`${API_BASE}/api/admin/reset`, { method: "POST" });
+                showAlert("controlAlert", "Simulation reset. Page will reload.", "success");
+                setTimeout(() => location.reload(), 2000);
+            } catch (e) {
+                showAlert("controlAlert", "Error resetting simulation", "error");
+            }
+        }
+
+        async function updateSpeed() {
+            const speed = document.getElementById("speedSlider").value;
+            document.getElementById("speedValue").textContent = `${speed}s`;
+
+            try {
+                await fetch(`${API_BASE}/api/admin/speed`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tick_duration_seconds: parseFloat(speed) })
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function updateEventTypeFields() {
+            const type = document.getElementById("eventType").value;
+            
+            if (type === "trend") {
+                document.getElementById("newsEventFields").style.display = "none";
+                document.getElementById("trendEventFields").style.display = "block";
+            } else {
+                document.getElementById("newsEventFields").style.display = "block";
+                document.getElementById("trendEventFields").style.display = "none";
+            }
+        }
+
+        async function injectEvent() {
+            const name = document.getElementById("eventName").value;
+            const eventType = document.getElementById("eventType").value;
+            
+            if (!name) {
+                showAlert("eventAlert", "Fill required fields", "error");
+                return;
+            }
+
+            let payload;
+            
+            if (eventType === "trend") {
+                const target = document.getElementById("eventTarget").value;
+                const direction = document.getElementById("trendDirection").value;
+                const strength = parseFloat(document.getElementById("trendStrength").value);
+                const duration = parseInt(document.getElementById("eventDuration").value);
+                
+                payload = {
+                    name, target_type: "trend", target,
+                    trend_direction: direction,
+                    impact_profit: strength,
+                    duration_ticks: duration
+                };
+            } else {
+                const targetType = document.getElementById("targetType").value;
+                const target = document.getElementById("targetField").value;
+                const impactProfit = parseFloat(document.getElementById("impactProfit").value);
+                const impactVol = parseFloat(document.getElementById("impactVol").value);
+                const duration = parseInt(document.getElementById("eventDuration").value);
+                
+                payload = {
+                    name, target_type: targetType, target,
+                    impact_profit: impactProfit, impact_volatility: impactVol,
+                    duration_ticks: duration
+                };
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/inject-event`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    showAlert("eventAlert", "Event injected", "success");
+                    document.getElementById("eventName").value = "";
+                    fetchEvents();
+                } else {
+                    showAlert("eventAlert", "Error injecting event", "error");
+                }
+            } catch (e) {
+                showAlert("eventAlert", "Error injecting event", "error");
+            }
+        }
+
+        async function adjustBalance() {
+            const username = document.getElementById("adjustUser").value;
+            const amount = parseFloat(document.getElementById("adjustAmount").value);
+            const reason = document.getElementById("adjustReason").value;
+
+            if (!username || isNaN(amount)) {
+                showAlert("adjustAlert", "Fill all fields", "error");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/adjust-balance`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, amount, reason })
+                });
+
+                if (res.ok) {
+                    showAlert("adjustAlert", "Balance adjusted", "success");
+                    document.getElementById("adjustAmount").value = "";
+                    document.getElementById("adjustReason").value = "";
+                    fetchUsers();
+                } else {
+                    showAlert("adjustAlert", "Error adjusting balance", "error");
+                }
+            } catch (e) {
+                showAlert("adjustAlert", "Error adjusting balance", "error");
+            }
+        }
+
+        function addLiquidations(liquidations) {
+            const list = document.getElementById("liquidationsList");
+            let html = "";
+
+            for (const [username, info] of Object.entries(liquidations)) {
+                html += `
+                    <div class="liquidation-item">
+                        <div class="liquidation-user">${username}</div>
+                        <div>UDS: ${info.uds.toFixed(2)}</div>
+                        <div class="liquidation-time">Liquidated</div>
+                    </div>
+                `;
+            }
+
+            if (html) {
+                list.innerHTML = html;
+            }
+        }
+
+        function showAlert(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="alert ${type}">${message}</div>`;
+            setTimeout(() => {
+                el.innerHTML = "";
+            }, 5000);
+        }
+
+        // Инициализация
+        connectWebSocket();
+        fetchStatus();
+        fetchUsers();
+        fetchEvents();
+
+        setInterval(fetchStatus, 2000);
+        setInterval(fetchUsers, 5000);
+        setInterval(fetchEvents, 5000);
+    </script>
+</body>
+</html>

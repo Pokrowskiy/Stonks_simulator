@@ -62,6 +62,51 @@ class NewsEvent:
         return self.remaining_ticks > 0
 
 
+class TrendEvent:
+    """Событие, влияющее на тренд цены (направление движения)."""
+    
+    def __init__(self,
+                 event_id: str,
+                 name: str,
+                 target_value: str,  # ticker или "MARKET"
+                 trend_direction: str,  # "UP" или "DOWN"
+                 strength: float,  # 0.0 - 1.0
+                 duration_ticks: int = 24):
+        """
+        Args:
+            event_id: Уникальный идентификатор
+            name: Название события
+            target_value: ticker или "MARKET"
+            trend_direction: "UP" или "DOWN"
+            strength: Величина тренда (0.0 - 1.0)
+            duration_ticks: Сколько тиков длится
+        """
+        self.event_id = event_id
+        self.name = name
+        self.target_value = target_value
+        self.trend_direction = trend_direction
+        self.strength = strength
+        self.duration_ticks = duration_ticks
+        self.remaining_ticks = duration_ticks
+    
+    def get_current_impact(self) -> float:
+        """Возвращает текущее влияние тренда (от -strength до +strength)."""
+        if self.remaining_ticks <= 0:
+            return 0.0
+        
+        # Линейное затухание тренда к концу
+        progress = (self.duration_ticks - self.remaining_ticks) / self.duration_ticks
+        decay = 1.0 - (progress * 0.3)
+        
+        direction = 1.0 if self.trend_direction == "UP" else -1.0
+        return self.strength * direction * decay
+    
+    def tick(self) -> bool:
+        """Уменьшает время жизни события."""
+        self.remaining_ticks -= 1
+        return self.remaining_ticks > 0
+
+
 class MarketEngine:
     """Основной движок рынка: управляет компаниями, ценами, дивидендами, событиями."""
     
@@ -72,6 +117,7 @@ class MarketEngine:
         """
         self.companies: Dict[str, Company] = {}
         self.events: List[NewsEvent] = []
+        self.trend_events: List[TrendEvent] = []
         self.index_price: float = 100.0
         self.index_history: List[float] = []
         self.price_calc = PriceCalculator(seed)
@@ -89,6 +135,9 @@ class MarketEngine:
     def add_event(self, event: NewsEvent) -> None:
         self.events.append(event)
     
+    def add_trend_event(self, event: TrendEvent) -> None:
+        self.trend_events.append(event)
+    
     def update_all_prices(self) -> None:
         """
         Обновляет цены всех компаний.
@@ -97,7 +146,8 @@ class MarketEngine:
         Для каждой компании:
         1. Обновляем прибыль (+ случайный шум)
         2. Рассчитываем новую цену (броуновское движение + фундаментальный тренд)
-        3. Сохраняем в историю
+        3. Применяем тренд-события
+        4. Сохраняем в историю
         """
         for ticker, company in self.companies.items():
             if company.is_index:
@@ -112,6 +162,13 @@ class MarketEngine:
                 base_profit=company.profit_base,
                 volatility=company.volatility,
             )
+            
+            # Применяем тренд-события
+            for trend in self.trend_events:
+                if trend.target_value == ticker or trend.target_value == "MARKET":
+                    trend_impact = trend.get_current_impact()
+                    new_price = new_price * (1.0 + trend_impact * 0.02)  # 2% за единицу strength
+            
             company.price = new_price
             company.add_price_history()
         
@@ -146,6 +203,15 @@ class MarketEngine:
                 active_events.append(event)
         
         self.events = active_events
+    
+    def update_trend_events(self) -> None:
+        """Обновляет тренд-события."""
+        active_trends = []
+        for trend in self.trend_events:
+            if trend.tick():
+                active_trends.append(trend)
+        
+        self.trend_events = active_trends
     
     def apply_events_to_companies(self) -> None:
         """
@@ -202,15 +268,17 @@ class MarketEngine:
         
         Последовательность:
         1. Выплачиваем дивиденды (в начале тика)
-        2. Обновляем все цены
-        3. Обновляем эффекты событий
+        2. Обновляем все цены (с учетом тренд-событий)
+        3. Обновляем эффекты событий (NewsEvent)
         4. Применяем события к компаниям
+        5. Обновляем тренд-события
         """
         self.tick_count += 1
         dividends = self.check_dividends()
         self.update_all_prices()
         self.update_events()
         self.apply_events_to_companies()
+        self.update_trend_events()
     
     def get_market_snapshot(self) -> Dict[str, Any]:
         """

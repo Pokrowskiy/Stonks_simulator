@@ -353,79 +353,60 @@ class Broker:
     
     # ===== ИНФОРМАЦИЯ И СТАТИСТИКА =====
     
-    def get_account_summary(self, username: str,
-                           prices: Dict[str, float],
-                           volatilities: Dict[str, float]) -> Dict[str, Any]:
-        """
-        Возвращает полную сводку по счёту.
-        
-        Args:
-            username: Имя пользователя
-            prices: Словарь цен
-            volatilities: Словарь волатильностей
-            
-        Returns:
-            Словарь с полной информацией
-        """
+    def get_account_summary(self, username: str, prices: dict, volatilities: dict) -> dict:
+        """Получить сводку по счёту."""
         account = self.get_account(username)
-        
+
         if not account:
-            raise ValueError(f"Счёт {username} не найден")
-        
+            raise ValueError(f"Account {username} not found")
+
         portfolio_value = account.calc_portfolio_value(prices)
-        initial_margin = account.calc_initial_margin(prices, volatilities)
-        min_margin = account.calc_min_margin(prices, volatilities)
         uds = account.calc_uds(prices, volatilities)
-        
-        positions = []
-        for ticker, quantity in account.positions.items():
-            if ticker in prices:
-                entry_price = prices[ticker]  # Симуляция (в реальности нужно хранить)
-                current_price = prices[ticker]
-                position_value = quantity * current_price
-                
-                positions.append({
-                    "ticker": ticker,
-                    "quantity": quantity,
-                    "entry_price": round(entry_price, 2),
-                    "current_price": round(current_price, 2),
-                    "position_value": round(position_value, 2),
-                })
-        
+        uds_status = account.get_uds_status(uds)
+
         return {
-            "username": username,
-            "uds": round(uds, 2),
-            "uds_status": account.get_uds_status(uds),
+            "username": account.username,
+            "uds": uds,
+            "uds_status": uds_status,
             "balances": {
-                "cash": round(account.cash_balance, 2),
-                "portfolio_value_current": round(portfolio_value, 2),
-                "portfolio_value_day_start": round(account.day_start_value, 2),
-                "portfolio_value_week_start": round(account.week_start_value, 2),
-                "portfolio_value_start": round(account.start_value, 2),
+                "cash": account.cash_balance,
+                "portfolio_value_current": portfolio_value,
+                "portfolio_value_start": account.start_value
             },
             "margins": {
-                "initial_margin": round(initial_margin, 2),
-                "min_margin": round(min_margin, 2),
+                "initial_margin": account.calc_initial_margin(prices, volatilities),
+                "min_margin": account.calc_min_margin(prices, volatilities)
             },
             "pnl": {
-                "daily_pnl": round(account.get_daily_pnl(portfolio_value), 2),
-                "daily_pnl_percent": round(account.get_daily_pnl_percent(portfolio_value), 2),
-                "weekly_pnl": round(account.get_weekly_pnl(portfolio_value), 2),
-                "total_pnl": round(account.get_total_pnl(portfolio_value), 2),
-                "total_return_percent": round(account.get_total_return_percent(portfolio_value), 2),
+                "daily_pnl": account.get_daily_pnl(portfolio_value),
+                "daily_pnl_percent": account.get_daily_pnl_percent(portfolio_value),
+                "weekly_pnl": account.get_weekly_pnl(portfolio_value),
+                "total_pnl": account.get_total_pnl(portfolio_value),
+                "total_return_percent": account.get_total_return_percent(portfolio_value),
             },
-            "positions": positions,
-            "is_liquidated": account.is_liquidated,
+            "positions": [
+                {
+                    "ticker": ticker,
+                    "quantity": quantity,
+                    "entry_price": 0,
+                    "current_price": prices.get(ticker, 0),
+                    "position_value": quantity * prices.get(ticker, 0)
+                }
+                for ticker, quantity in account.positions.items()
+            ],
+            "is_liquidated": account.is_liquidated
         }
-    
-    def get_all_accounts_summary(self, 
-                                prices: Dict[str, float],
-                                volatilities: Dict[str, float]) -> Dict[str, Dict[str, Any]]:
-        """Возвращает сводку по всем счётам."""
-        result = {}
+
+    def get_all_accounts_summary(self, prices: dict, volatilities: dict) -> list:
+        """Получить сводку по всем счётам."""
+        summaries = []
         for username in self.accounts.keys():
-            result[username] = self.get_account_summary(username, prices, volatilities)
-        return result
+            try:
+                summary = self.get_account_summary(username, prices, volatilities)
+                summaries.append(summary)
+            except Exception as e:
+                print(f"Error getting summary for {username}: {e}")
+        return summaries
     
     def get_order_history(self, username: str = None, limit: int = 50) -> List[Order]:
         """

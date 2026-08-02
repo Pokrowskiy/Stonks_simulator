@@ -3,7 +3,7 @@ Trading Simulator: главный файл приложения.
 """
 
 import asyncio
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 import uvicorn
@@ -16,6 +16,8 @@ from src.api.broker_api import create_broker_router
 from src.api.admin_api import create_admin_router
 from src.api.websocket import ws_manager, websocket_handler
 
+
+from fastapi.middleware.cors import CORSMiddleware
 
 # ===== Инициализация =====
 
@@ -78,19 +80,86 @@ print("  ✓ Admin API подключена")
 
 @app.get("/", response_class=HTMLResponse)
 async def root_html():
-    """Главная страница с dashboard."""
+    """Главная страница - выбор интерфейса."""
+    return """
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: #1a1a1a;
+                color: white;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+            }
+            .container {
+                text-align: center;
+            }
+            h1 {
+                margin-bottom: 40px;
+                font-size: 32px;
+            }
+            .buttons {
+                display: flex;
+                gap: 20px;
+                justify-content: center;
+            }
+            a {
+                display: inline-block;
+                padding: 15px 40px;
+                background: #333;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 16px;
+                font-weight: 500;
+                transition: background 0.2s;
+            }
+            a:hover {
+                background: #555;
+            }
+            a.api {
+                background: #666;
+            }
+            a.api:hover {
+                background: #888;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Trading Simulator</h1>
+            <div class="buttons">
+                <a href="/trader">Trader</a>
+                <a href="/admin">Admin</a>
+                <a href="/docs" class="api">API Docs</a>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+@app.get("/trader", response_class=HTMLResponse)
+async def trader_html():
+    """Пользовательский интерфейс."""
     try:
-        with open("dashboard.html", "r", encoding="utf-8") as f:
+        with open("frontend/trader.html", "r", encoding="utf-8") as f:
             return f.read()
     except:
-        return """
-        <html>
-        <body>
-        <h1>Trading Simulator</h1>
-        <p><a href="/docs">API документация</a></p>
-        </body>
-        </html>
-        """
+        return "<html><body><h1>Error: trader.html not found</h1></body></html>"
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_html():
+    """Админский интерфейс."""
+    try:
+        with open("frontend/admin.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except:
+        return "<html><body><h1>Error: admin.html not found</h1></body></html>"
 
 @app.get("/health")
 async def health():
@@ -107,8 +176,7 @@ async def health():
 # ===== WebSocket =====
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket):
-    """WebSocket для потоковых обновлений."""
+async def websocket_endpoint(websocket: WebSocket):
     await websocket_handler(websocket)
 
 # ===== Startup/Shutdown =====

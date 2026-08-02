@@ -24,10 +24,11 @@ class EventInjectionRequest(BaseModel):
     """Запрос на вброс события на рынок."""
     name: str
     description: Optional[str] = None
-    target_type: str  # "company", "sector", "market"
-    target: str  # ticker для company, название для sector, "MARKET" для market
-    impact_profit: float = 0.0  # Влияние на прибыль (множитель)
+    target_type: str  # "company", "sector", "market", "trend"
+    target: str  # ticker для company, название для sector, "MARKET" для market, ticker для trend
+    impact_profit: float = 0.0  # Влияние на прибыль (множитель) или strength для trend
     impact_volatility: float = 0.0  # Влияние на волатильность (множитель)
+    trend_direction: Optional[str] = None  # "UP" или "DOWN" для trend-событий
     decay_type: str = "linear"  # "linear" или "shock"
     duration_ticks: int = 24  # Длительность события в тиках
 
@@ -199,25 +200,37 @@ def create_admin_router(orchestrator: Any) -> APIRouter:
     async def inject_event(request: EventInjectionRequest):
         """Добавляет событие на рынок."""
         try:
-            from market import NewsEvent
+            import uuid
+            from src.market_engine.market import NewsEvent, TrendEvent
             
-            event = NewsEvent(
-                name=request.name,
-                description=request.description or "",
-                target_type=request.target_type,
-                target=request.target,
-                impact_profit=request.impact_profit,
-                impact_volatility=request.impact_volatility,
-                decay_type=request.decay_type,
-                duration_ticks=request.duration_ticks,
-                start_tick=orchestrator.market_engine.tick_count
-            )
-            
-            orchestrator.market_engine.add_event(event)
+            # Если это тренд-событие
+            if request.target_type == "trend":
+                event = TrendEvent(
+                    event_id=str(uuid.uuid4()),
+                    name=request.name,
+                    target_value=request.target,
+                    trend_direction=request.trend_direction or "UP",
+                    strength=request.impact_profit,  # Переиспользуем поле для strength
+                    duration_ticks=request.duration_ticks
+                )
+                orchestrator.market_engine.add_trend_event(event)
+            else:
+                # Обычное новостное событие
+                event = NewsEvent(
+                    event_id=str(uuid.uuid4()),
+                    name=request.name,
+                    target_type=request.target_type,
+                    target_value=request.target,
+                    impact_profit=request.impact_profit,
+                    impact_volatility=request.impact_volatility,
+                    duration_ticks=request.duration_ticks,
+                    decay_type=request.decay_type
+                )
+                orchestrator.market_engine.add_event(event)
             
             return {
                 "status": "injected",
-                "event_id": event.id,
+                "event_id": event.event_id,
                 "event_name": event.name,
                 "target": f"{request.target_type}:{request.target}",
                 "duration_ticks": request.duration_ticks,
@@ -225,6 +238,7 @@ def create_admin_router(orchestrator: Any) -> APIRouter:
             }
         
         except Exception as e:
+            print(f"Error injecting event: {str(e)}")
             raise HTTPException(
                 status_code=500,
                 detail=f"Ошибка при вбросе события: {str(e)}"
