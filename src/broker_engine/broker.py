@@ -236,10 +236,10 @@ class Broker:
         
         # Обновляем счёт
         account.cash_balance = cash_after
-        if new_position == 0:
-            account.positions.pop(ticker, None)
-        else:
-            account.positions[ticker] = new_position
+        
+        # Обновляем позицию (с отслеживанием средней цены входа)
+        quantity_change = quantity if action == "BUY" else -quantity
+        account.add_position(ticker, quantity_change, current_price)
         
         self.order_history.append(order)
         
@@ -356,14 +356,16 @@ class Broker:
     def get_account_summary(self, username: str, prices: dict, volatilities: dict) -> dict:
         """Получить сводку по счёту."""
         account = self.get_account(username)
-
+    
         if not account:
             raise ValueError(f"Account {username} not found")
-
+        
         portfolio_value = account.calc_portfolio_value(prices)
+        initial_margin = account.calc_initial_margin(prices, volatilities)
+        min_margin = account.calc_min_margin(prices, volatilities)
         uds = account.calc_uds(prices, volatilities)
         uds_status = account.get_uds_status(uds)
-
+        
         return {
             "username": account.username,
             "uds": uds,
@@ -374,8 +376,8 @@ class Broker:
                 "portfolio_value_start": account.start_value
             },
             "margins": {
-                "initial_margin": account.calc_initial_margin(prices, volatilities),
-                "min_margin": account.calc_min_margin(prices, volatilities)
+                "initial_margin": initial_margin,
+                "min_margin": min_margin
             },
             "pnl": {
                 "daily_pnl": account.get_daily_pnl(portfolio_value),
@@ -388,9 +390,11 @@ class Broker:
                 {
                     "ticker": ticker,
                     "quantity": quantity,
-                    "entry_price": 0,
+                    "entry_price": account.entry_prices.get(ticker, 0.0),
                     "current_price": prices.get(ticker, 0),
-                    "position_value": quantity * prices.get(ticker, 0)
+                    "position_value": quantity * prices.get(ticker, 0),
+                    "pnl_daily": (prices.get(ticker, 0) - account.entry_prices.get(ticker, 0)) * quantity,
+                    "pnl_total": (prices.get(ticker, 0) - account.entry_prices.get(ticker, 0)) * quantity
                 }
                 for ticker, quantity in account.positions.items()
             ],
@@ -404,8 +408,8 @@ class Broker:
             try:
                 summary = self.get_account_summary(username, prices, volatilities)
                 summaries.append(summary)
-            except Exception as e:
-                print(f"Error getting summary for {username}: {e}")
+            except:
+                pass
         return summaries
     
     def get_order_history(self, username: str = None, limit: int = 50) -> List[Order]:

@@ -133,6 +133,14 @@
             margin-top: 5px;
         }
 
+        .stat-change.positive {
+            color: #28a745;
+        }
+
+        .stat-change.negative {
+            color: #dc3545;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -333,8 +341,12 @@
             display: block;
         }
 
-        .ticker-selector {
-            margin-bottom: 15px;
+        .pnl-positive {
+            color: #28a745;
+        }
+
+        .pnl-negative {
+            color: #dc3545;
         }
     </style>
 </head>
@@ -344,6 +356,7 @@
         <div class="status-bar">
             <span><span class="connection-status connected"></span>Connection: Connected</span>
             <span id="userDisplay">User: -</span>
+            <span id="timeDisplay">Week: 0, Day: 0, 0:00</span>
         </div>
         <button class="change-user-btn" onclick="clearUsername()">Change User</button>
     </div>
@@ -360,7 +373,7 @@
                     <div class="form-row">
                         <div>
                             <label>Ticker</label>
-                            <select id="tradeTicker">
+                            <select id="tradeTicker" onchange="onTickerChange()">
                                 <option value="">Select asset...</option>
                                 <option value="GIGA">GIGA</option>
                                 <option value="PWR">PWR</option>
@@ -380,6 +393,15 @@
                     </div>
                 </div>
                 <div id="tradeAlert"></div>
+
+                <div class="chart-container">
+                    <div class="chart-controls">
+                        <button class="active" onclick="switchChartPeriod(24)">24 Hours</button>
+                        <button onclick="switchChartPeriod(168)">1 Week</button>
+                        <button onclick="switchChartPeriod(1000)">Full History</button>
+                    </div>
+                    <canvas id="priceChart" width="800" height="300"></canvas>
+                </div>
             </div>
         </div>
 
@@ -418,44 +440,16 @@
                             <th>Quantity</th>
                             <th>Price</th>
                             <th>Value</th>
+                            <th>Daily PnL</th>
+                            <th>Total PnL</th>
                         </tr>
                     </thead>
                     <tbody id="positionsTable">
                         <tr>
-                            <td colspan="4" style="text-align: center; color: #999;">No positions</td>
+                            <td colspan="6" style="text-align: center; color: #999;">No positions</td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
-        </div>
-
-        <!-- Графики -->
-        <div class="section">
-            <div class="section-header" onclick="toggleSection(this)">
-                <span>Price Charts</span>
-                <span class="toggle">></span>
-            </div>
-            <div class="section-content">
-                <div class="ticker-selector">
-                    <label>Select Ticker</label>
-                    <select id="chartTicker" onchange="updateChart()">
-                        <option value="GIGA">GIGA</option>
-                        <option value="PWR">PWR</option>
-                        <option value="BANK">BANK</option>
-                        <option value="FOOD">FOOD</option>
-                        <option value="PHARMA">PHARMA</option>
-                    </select>
-                </div>
-
-                <div class="chart-controls">
-                    <button class="active" onclick="switchChartPeriod(24)">24 Hours</button>
-                    <button onclick="switchChartPeriod(168)">1 Week</button>
-                    <button onclick="switchChartPeriod(1000)">Full History</button>
-                </div>
-
-                <div class="chart-container">
-                    <canvas id="priceChart" width="800" height="300"></canvas>
-                </div>
             </div>
         </div>
 
@@ -523,6 +517,8 @@
         let lastPrices = {};
         let lastPriceHistory = {};
         let currentChartPeriod = 24;
+        let currentTick = 0;
+        let dayStartPrices = {};
 
         function clearUsername() {
             localStorage.removeItem('username');
@@ -535,6 +531,40 @@
             content.classList.toggle("visible");
         }
 
+        function updateTimeDisplay(tick) {
+            const week = Math.floor(tick / 168);
+            const dayInWeek = Math.floor((tick % 168) / 24);
+            const hour = tick % 24;
+            document.getElementById("timeDisplay").textContent = `Week: ${week}, Day: ${dayInWeek}, ${hour}:00`;
+            
+            // Сбрасываем дневные цены каждый день
+            if (hour === 0 && tick > 0) {
+                dayStartPrices = { ...lastPrices };
+            }
+        }
+
+        function onTickerChange() {
+            const ticker = document.getElementById("tradeTicker").value;
+            if (ticker) {
+                fetchPriceHistory(ticker).then(() => updateChart());
+            }
+        }
+
+        async function updateChartData() {
+            const ticker = document.getElementById("tradeTicker").value;
+            if (!ticker) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/market/history/${ticker}?limit=1000`);
+                if (!res.ok) return;
+                const data = await res.json();
+                lastPriceHistory[ticker] = data.history || [];
+                updateChart();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
         function connectWebSocket() {
             ws = new WebSocket(WS_URL);
             
@@ -545,9 +575,17 @@
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
+                    if (data.tick) {
+                        currentTick = data.tick;
+                        updateTimeDisplay(data.tick);
+                    }
                     if (data.prices) {
                         lastPrices = data.prices;
+                        if (Object.keys(dayStartPrices).length === 0) {
+                            dayStartPrices = { ...lastPrices };
+                        }
                         updateMarketDisplay(data.prices);
+                        updateChartData();
                     }
                 } catch (e) {
                     console.error("Error parsing WebSocket data:", e);
@@ -594,16 +632,32 @@
 
                 const tbody = document.getElementById("positionsTable");
                 if (data.positions.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">No positions</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">No positions</td></tr>';
                 } else {
-                    tbody.innerHTML = data.positions.map(p => `
-                        <tr>
-                            <td>${p.ticker}</td>
-                            <td>${p.quantity}</td>
-                            <td>$${p.current_price.toFixed(2)}</td>
-                            <td>$${p.position_value.toFixed(2)}</td>
-                        </tr>
-                    `).join("");
+                    tbody.innerHTML = data.positions.map(p => {
+                        // Дневный PnL
+                        const dayStartPrice = dayStartPrices[p.ticker] || p.entry_price;
+                        const dailyPnL = (p.current_price - dayStartPrice) * p.quantity;
+                        const dailyPnLPercent = dayStartPrice > 0 ? ((p.current_price - dayStartPrice) / dayStartPrice * 100) : 0;
+                        
+                        // Общий PnL (от цены входа)
+                        const totalPnL = p.pnl_total || 0;
+                        const totalPnLPercent = p.entry_price > 0 ? (totalPnL / (p.entry_price * p.quantity) * 100) : 0;
+                        
+                        const dailyClass = dailyPnL >= 0 ? 'pnl-positive' : 'pnl-negative';
+                        const totalClass = totalPnL >= 0 ? 'pnl-positive' : 'pnl-negative';
+                        
+                        return `
+                            <tr>
+                                <td>${p.ticker}</td>
+                                <td>${p.quantity}</td>
+                                <td>$${p.current_price.toFixed(2)}</td>
+                                <td>$${p.position_value.toFixed(2)}</td>
+                                <td class="${dailyClass}">$${dailyPnL.toFixed(2)} (${dailyPnLPercent.toFixed(2)}%)</td>
+                                <td class="${totalClass}">$${totalPnL.toFixed(2)} (${totalPnLPercent.toFixed(2)}%)</td>
+                            </tr>
+                        `;
+                    }).join("");
                 }
             } catch (e) {
                 console.error(e);
@@ -658,6 +712,41 @@
             }
         }
 
+        function switchChartPeriod(period) {
+            currentChartPeriod = period;
+            
+            document.querySelectorAll('.chart-controls button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            updateChart();
+        }
+
+        async function updateChart() {
+            const ticker = document.getElementById("tradeTicker").value;
+            if (!ticker) return;
+
+            let history = lastPriceHistory[ticker];
+            
+            if (!history || history.length === 0) {
+                return;
+            }
+
+            let data = history;
+
+            if (currentChartPeriod === 24) {
+                data = history.slice(-24);
+            } else if (currentChartPeriod === 168) {
+                data = history.slice(-168);
+            } else if (currentChartPeriod === 1000) {
+                data = history.slice(-1000);
+                data = data.filter((_, i) => i % 24 === 0);
+            }
+
+            drawChart(data);
+        }
+
         async function fetchPriceHistory(ticker) {
             try {
                 const res = await fetch(`${API_BASE}/api/market/history/${ticker}?limit=1000`);
@@ -671,45 +760,6 @@
             }
         }
 
-        function switchChartPeriod(period) {
-            currentChartPeriod = period;
-            
-            document.querySelectorAll('.chart-controls button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            updateChart();
-        }
-
-        async function updateChart() {
-            const ticker = document.getElementById("chartTicker").value;
-            let history = lastPriceHistory[ticker];
-            
-            if (!history || history.length === 0) {
-                history = await fetchPriceHistory(ticker);
-            }
-
-            if (!history || history.length === 0) {
-                console.log("No history data");
-                return;
-            }
-
-            // Выбираем данные в зависимости от периода
-            let data = history;
-            if (currentChartPeriod < history.length) {
-                data = history.slice(-currentChartPeriod);
-            }
-
-            // Если больше 50 точек, разреживаем
-            if (data.length > 50) {
-                const step = Math.ceil(data.length / 50);
-                data = data.filter((_, i) => i % step === 0);
-            }
-
-            drawChart(data);
-        }
-
         function drawChart(data) {
             const canvas = document.getElementById("priceChart");
             const ctx = canvas.getContext('2d');
@@ -720,42 +770,21 @@
             const height = canvas.height;
             const padding = 50;
             
-            // Очищаем canvas
             ctx.fillStyle = '#fff';
             ctx.fillRect(0, 0, width, height);
 
-            // Находим min/max
             const prices = data.map(p => typeof p === 'object' ? p.price : p);
             const minPrice = Math.min(...prices);
             const maxPrice = Math.max(...prices);
             const priceRange = maxPrice - minPrice || 1;
-            const startPrice = prices[0];
 
-            // Функция для преобразования цены в координаты
             const priceToY = (price) => {
                 return height - padding - ((price - minPrice) / priceRange) * (height - padding * 2);
             };
 
             const xStep = (width - padding * 2) / (data.length - 1);
 
-            // Рисуем цветные области под линией
-            ctx.beginPath();
-            ctx.moveTo(padding, priceToY(startPrice));
-            
-            for (let i = 0; i < data.length; i++) {
-                const x = padding + i * xStep;
-                const price = prices[i];
-                const y = priceToY(price);
-                ctx.lineTo(x, y);
-            }
-
-            // Замыкаем путь в конец для области
-            const lastX = padding + (data.length - 1) * xStep;
-            ctx.lineTo(lastX, height - padding);
-            ctx.lineTo(padding, height - padding);
-            ctx.closePath();
-
-            // Заливаем области
+            // Рисуем цветные полосы между соседними ценами
             for (let i = 0; i < data.length - 1; i++) {
                 const x = padding + i * xStep;
                 const price = prices[i];
@@ -763,14 +792,13 @@
                 const y = priceToY(price);
                 const nextY = priceToY(nextPrice);
                 
-                // Рисуем маленькие полосочки
                 const rectWidth = xStep;
-                const avgPrice = (price + nextPrice) / 2;
                 
-                if (avgPrice >= startPrice) {
-                    ctx.fillStyle = 'rgba(40, 167, 69, 0.2)'; // Зелёный
+                // Если цена выше предыдущей - зелёный, иначе красный
+                if (nextPrice > price) {
+                    ctx.fillStyle = 'rgba(40, 167, 69, 0.8)'; // Зелёный
                 } else {
-                    ctx.fillStyle = 'rgba(220, 53, 69, 0.2)'; // Красный
+                    ctx.fillStyle = 'rgba(220, 53, 69, 0.8)'; // Красный
                 }
                 
                 ctx.fillRect(x, Math.min(y, nextY), rectWidth, Math.abs(nextY - y) || 1);
@@ -854,12 +882,10 @@
             }, 5000);
         }
 
-        // Инициализация
         connectWebSocket();
         updatePortfolio();
         updateOrders();
         updateEvents();
-        fetchPriceHistory('GIGA').then(() => updateChart());
 
         setInterval(updatePortfolio, 2000);
         setInterval(updateOrders, 5000);

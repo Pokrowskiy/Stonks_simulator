@@ -18,6 +18,7 @@ class BrokerAccount:
     # ===== АКТИВЫ =====
     cash_balance: float = 0.0               # Свободные деньги (может быть < 0 при плече)
     positions: Dict[str, int] = field(default_factory=dict)  # {"GIGA": 50, "PWR": -10}
+    entry_prices: Dict[str, float] = field(default_factory=dict)  # {"GIGA": 150.0, "PWR": 45.5}
     
     # ===== АНАЛИТИКА =====
     start_value: float = 0.0                # Стоимость портфеля при создании
@@ -38,6 +39,11 @@ class BrokerAccount:
             self.day_start_value = self.cash_balance
         if not self.week_start_value:
             self.week_start_value = self.cash_balance
+        
+        # Инициализируем entry_prices для существующих позиций
+        for ticker in self.positions:
+            if ticker not in self.entry_prices:
+                self.entry_prices[ticker] = 0.0
     
     # ===== ОСНОВНЫЕ РАСЧЁТЫ =====
     
@@ -181,22 +187,48 @@ class BrokerAccount:
     
     # ===== МАНИПУЛЯЦИЯ ПОЗИЦИЯМИ =====
     
-    def add_position(self, ticker: str, quantity: int) -> None:
+    def add_position(self, ticker: str, quantity: int, price: float = 0.0) -> None:
         """
         Добавляет позицию (или увеличивает существующую).
+        Обновляет среднюю цену входа при покупке.
         
         Args:
             ticker: Тикер актива
             quantity: Количество акций (может быть отрицательным для шорта)
+            price: Цена покупки/продажи
         """
         if ticker not in self.positions:
             self.positions[ticker] = 0
+            self.entry_prices[ticker] = 0.0
         
-        self.positions[ticker] += quantity
+        old_qty = self.positions[ticker]
+        new_qty = old_qty + quantity
         
-        # Если позиция стала 0, удаляем её
-        if self.positions[ticker] == 0:
+        # Обновляем среднюю цену входа (при увеличении позиции)
+        if quantity > 0 and new_qty > 0:
+            # Вычисляем новую среднюю цену
+            if old_qty > 0:
+                # Увеличиваем существующую позицию
+                old_avg = self.entry_prices.get(ticker, price)
+                self.entry_prices[ticker] = (old_qty * old_avg + quantity * price) / new_qty
+            else:
+                # Открываем новую позицию или выходим из шорта
+                self.entry_prices[ticker] = price
+        elif quantity < 0 and new_qty < 0:
+            # При шорте - обновляем цену шорта
+            if old_qty < 0:
+                old_avg = self.entry_prices.get(ticker, price)
+                self.entry_prices[ticker] = (abs(old_qty) * old_avg + abs(quantity) * price) / abs(new_qty)
+            else:
+                self.entry_prices[ticker] = price
+        elif new_qty == 0:
+            # Позиция закрыта - удаляем
             del self.positions[ticker]
+            if ticker in self.entry_prices:
+                del self.entry_prices[ticker]
+            return
+        
+        self.positions[ticker] = new_qty
     
     def close_position(self, ticker: str, price: float) -> Dict[str, float]:
         """
@@ -322,6 +354,7 @@ class BrokerAccount:
             "username": self.username,
             "cash_balance": self.cash_balance,
             "positions": self.positions,
+            "entry_prices": self.entry_prices,
             "start_value": self.start_value,
             "day_start_value": self.day_start_value,
             "week_start_value": self.week_start_value,
@@ -337,6 +370,7 @@ class BrokerAccount:
             username=data["username"],
             cash_balance=data.get("cash_balance", 0.0),
             positions=data.get("positions", {}),
+            entry_prices=data.get("entry_prices", {}),
             start_value=data.get("start_value", 0.0),
             day_start_value=data.get("day_start_value", 0.0),
             week_start_value=data.get("week_start_value", 0.0),
