@@ -55,7 +55,11 @@ class Orchestrator:
         self.is_running = True
         
         try:
-            while self.is_running:
+            while True:  # Бесконечный цикл для поддержки паузы/возобновления
+                # Если на паузе, ждём пока возобновят
+                while not self.is_running:
+                    await asyncio.sleep(0.1)
+                
                 # 1. Один тик рынка
                 self.market_engine.tick()
                 self.tick_count += 1

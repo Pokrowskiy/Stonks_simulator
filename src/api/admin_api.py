@@ -78,7 +78,7 @@ def create_admin_router(orchestrator: Any) -> APIRouter:
                     detail="Симуляция уже запущена"
                 )
             
-            orchestrator.is_running = True
+            orchestrator.resume()
             
             return {
                 "status": "started",
@@ -105,7 +105,7 @@ def create_admin_router(orchestrator: Any) -> APIRouter:
                     detail="Симуляция уже на паузе"
                 )
             
-            orchestrator.is_running = False
+            orchestrator.pause()
             
             return {
                 "status": "paused",
