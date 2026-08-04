@@ -278,13 +278,10 @@
             </div>
             <div class="section-content visible">
                 <div class="form-group">
-                    <div class="form-row">
-                        <div>
-                            <label>Tick Duration (seconds)</label>
-                            <input type="range" id="speedSlider" min="0.1" max="10" step="0.1" value="0.5" 
-                                   oninput="updateSpeed(this.value)">
-                            <small id="speedDisplay">0.5 sec/tick</small>
-                        </div>
+                    <label>Tick Speed (seconds)</label>
+                    <div class="slider-container">
+                        <input type="range" id="speedSlider" min="0.1" max="10" step="0.1" value="2" onchange="updateSpeed()">
+                        <span class="slider-value" id="speedValue">0.5s</span>
                     </div>
                     <div class="form-row">
                         <button class="start" onclick="startSimulation()">Start</button>
@@ -581,8 +578,19 @@
             };
         }
 
-        function updateSpeed(value) {
-            document.getElementById("speedDisplay").textContent = `${parseFloat(value).toFixed(1)} sec/tick`;
+        async function updateSpeed() {
+            const speed = document.getElementById("speedSlider").value;
+            document.getElementById("speedValue").textContent = `${speed}s`;
+
+            try {
+                await fetch(`${API_BASE}/api/admin/speed`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tick_duration_seconds: parseFloat(speed) })
+                });
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         async function startSimulation() {
