@@ -1,70 +1,100 @@
+import time
 from trading_client import TradingClient
 
-# ========CONFIG=========
+# ======== CONFIG =========
 connection_url = "http://localhost:8000"
 
+# Инициализируем клиента. 
 # Если username указан, клиент работает как трейдер. Если None — только как наблюдатель.
-client = TradingClient(base_url=connection_url, username="TradingBot")
+client = TradingClient(base_url=connection_url, username="Admin")
 
 def main():
-    # Получить данные о рынке
+    print("=== ДЕМОНСТРАЦИЯ РАБОТЫ TRADING CLIENT ===\n")
+
+    # --- 1. ПУБЛИЧНЫЕ ДАННЫЕ РЫНКА (Market Engine API) ---
+    print("--- 1.1 Статус рынка ---")
     market_status = client.get_market_status()
-    
-    # Получить данные о индексе
+    print(f"Статус: {market_status}\n")
+
+    print("--- 1.2 Рыночный индекс ---")
     index_data = client.get_market_index()
-    
-    # Получить список компаний и их текущие цены
+    print(f"Индекс: {index_data}\n")
+
+    print("--- 1.3 Список компаний ---")
     companies = client.get_companies()
     
-    #Тестовый тикер
     test_ticker = "PWR"
-    
-    # Получить историю цен для тестового тикера
+    print(f"Доступные тикеры: {companies}\n")
+
+    print(f"--- 1.4 История цен для {test_ticker} ---")
     history = client.get_price_history(ticker=test_ticker, limit=5)
-    
-    # Получить фундаментальные данные для тестового тикера
+    print(f"Последние 5 тиков: {history}\n")
+
+    print(f"--- 1.5 Фундаментальные данные {test_ticker} ---")
     fundamentals = client.get_fundamentals(ticker=test_ticker)
-    
+    print(f"Фундаментал: {fundamentals}\n")
+
+    print("--- 1.6 Активные события (Новости/Тренды) ---")
     events = client.get_events()
+    print(f"События: {events}\n")
 
-    # Получить техническиеданные о брокере
+
+    # --- 2. ДАННЫЕ БРОКЕРА (Broker API) ---
+    print("--- 2.1 Статус брокера ---")
     broker_status = client.get_broker_status()
-    
-    # Получить данные о ликвидациях
+    print(f"Брокер: {broker_status}\n")
+
+    print("--- 2.2 Последние ликвидации (Маржин-коллы) ---")
     liquidations = client.get_liquidations()
-    
-    # Получить информацию о счете
+    print(f"Ликвидированные счета: {liquidations}\n")
+
+
+    # --- 3. ИНФОРМАЦИЯ О СЧЕТЕ И ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ---
+    print(f"--- 3.1 Полная информация о счете '{client.username}' ---")
     account_info = client.get_account_info()
+    # Выводим только ключи или часть данных, чтобы не засорять консоль
+    if account_info:
+        print(f"УДС: {account_info.get('uds')}, Балансы: {account_info.get('balances')}\n")
+    else:
+        print("Счет не найден или API недоступно.\n")
 
-    # Получить текущую цену тестового тикера
-    current_price  = client.get_current_price(test_ticker)
+    print("--- 3.2 Вспомогательные метрики счета ---")
+    print(f"Текущая цена {test_ticker}: {client.get_current_price(test_ticker)}")
+    print(f"Свободный кэш: {client.get_cash_balance()}")
+    print(f"Эквити (Оценка всего портфеля): {client.get_portfolio_value()}")
+    print(f"Текущий УДС: {client.get_uds()}")
+    print(f"Счет в безопасности (УДС > 0)? {client.is_healthy()}\n")
 
-    # Получить текущее количество свободных средств на счете
-    cash = client.get_cash_balance()
 
-    # Получить текущую стоимость портфеля
-    value = client.get_portfolio_value()
-
-    # Получить текущий уровень маржи (UDS)
-    uds = client.get_uds()
-
-    # Проверить, находится ли счет в безопасности от маржин-колла
-    sefty = client.is_healthy()
-
-    # Попытаться купить акции
+    # --- 4. ТОРГОВЛЯ ---
+    print("--- 4.1 Торговые операции ---")
+    
+    # Метод buy()
+    print(f"Попытка КУПИТЬ 10 акций {test_ticker}...")
     buy_res = client.buy(ticker=test_ticker, quantity=10)
+    print(f"Результат: {buy_res}")
 
-    # Получить информацию о позиции по тестовому тикеру
+    time.sleep(1) # Симулируем небольшую паузу
+
+    # Метод get_position()
     position = client.get_position(ticker=test_ticker)
+    print(f"Текущая позиция по {test_ticker}: {position}")
 
-    # Попытаться продать акции
+    # Метод sell()
+    print(f"Попытка ПРОДАТЬ 5 акций {test_ticker}...")
     sell_res = client.sell(ticker=test_ticker, quantity=5)
+    print(f"Результат: {sell_res}")
 
-    # Альтернативный способ выполнения ордера
+    # Метод execute_order() (Универсальный, продаем оставшиеся 5 акций)
+    print(f"Универсальный вызов: ПРОДАТЬ еще 5 акций {test_ticker}...")
     exec_res = client.execute_order(ticker=test_ticker, action="SELL", quantity=5)
+    print(f"Результат: {exec_res}\n")
 
-    # Получить историю ордеров
+    print("--- 4.2 История ордеров ---")
     orders = client.get_order_history(limit=5)
+    print(f"Последние 5 ордеров пользователя: {orders}\n")
+    
+    print("=== ДЕМОНСТРАЦИЯ ЗАВЕРШЕНА ===")
 
 if __name__ == "__main__":
     main()

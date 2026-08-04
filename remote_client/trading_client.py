@@ -7,7 +7,7 @@ class TradingClient:
     """
     Клиент для взаимодействия с API симуляции (Market Engine и Broker).
     """
-    def __init__(self, base_url: str = connection_url, username: str = "TradingBot"):
+    def __init__(self, base_url: str, username: str = "TradingBot"):
         """
         Инициализация клиента.
 
@@ -338,18 +338,22 @@ class TradingClient:
     def get_current_price(self, ticker: str) -> Optional[float]:
         """
         Получает текущую рыночную стоимость конкретного актива.
-
-        Входные данные:
-            ticker (str): Тикер компании.
-
-        Выходные данные:
-            Optional[float]: Текущая цена актива.
-            Возвращает None, если тикер не найден или API недоступно.
         """
         companies = self.get_companies()
-        if companies and "companies" in companies:
-            if ticker in companies["companies"]:
-                return companies["companies"][ticker].get("price")
+        if not companies:
+            return None
+            
+        if isinstance(companies, list):
+            # Перебираем массив в поисках нужного тикера
+            for comp in companies:
+                if isinstance(comp, dict) and comp.get("ticker") == ticker:
+                    return comp.get("price")
+        elif isinstance(companies, dict):
+            # Оставляем логику для словаря на всякий случай
+            data = companies.get("companies", companies)
+            if ticker in data and isinstance(data[ticker], dict):
+                return data[ticker].get("price")
+                
         return None
     
     def get_portfolio_value(self) -> Optional[float]:
