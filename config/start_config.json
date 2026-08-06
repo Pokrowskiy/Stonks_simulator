@@ -68,14 +68,14 @@
       "role": "admin"
     },
     {
-      "username": "Mint_AI",
-      "initial_balance": 5000.0,
+      "username": "Mint",
+      "initial_balance": 1000.0,
       "role": "trader"
     },
     {
-      "username": "Viewer_1",
+      "username": "test_user_1",
       "initial_balance": 25.0,
-      "role": "viewer"
+      "role": "trader"
     }
   ],
   "simulation": {

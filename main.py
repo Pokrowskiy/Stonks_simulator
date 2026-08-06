@@ -201,15 +201,15 @@ if __name__ == "__main__":
     print("\n" + "=" * 80)
     print("✓ Trading Simulator готов к запуску")
     print("=" * 80)
-    print("\nЗапуск на http://localhost:8000")
-    print("Документация: http://localhost:8000/docs")
+    print("\nЗапуск на http://localhost:8020")
+    print("Документация: http://localhost:8020/docs")
     print("\nДля остановки: Ctrl+C")
     print("=" * 80 + "\n")
     
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8020,
         reload=False,
         log_level="info"
     )

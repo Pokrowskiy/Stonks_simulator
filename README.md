@@ -30,7 +30,7 @@
 from trading_client import TradingClient
 
 # ========CONFIG=========
-connection_url = "http://localhost:8000"
+connection_url = "http://localhost:8020"
 
 # Если username указан, клиент работает как трейдер. Если None — только как наблюдатель.
 client = TradingClient(base_url=connection_url, username="TradingBot")

@@ -12,7 +12,7 @@ class PriceCalculator:
         """
         self.rng = np.random.RandomState(seed)
     
-    def brownian_noise(self, volatility: float, mean_reversion_speed: float = 0.15) -> float:
+    def brownian_noise(self, volatility: float, mean_reversion_speed: float = 0.05) -> float:
         """
         Генерирует шум на основе броуновского движения с регрессией к среднему.
         
@@ -23,7 +23,7 @@ class PriceCalculator:
         Returns:
             Процентное изменение цены (напр. 0.02 = +2%, -0.03 = -3%)
         """
-        brownian_step = self.rng.normal(0, volatility / 20)
+        brownian_step = self.rng.normal(0, volatility / 5)
         
         mean_reversion_pull = -brownian_step * mean_reversion_speed
         
@@ -50,7 +50,7 @@ class PriceCalculator:
         
         profit_ratio = current_profit / base_profit
         
-        price_factor = np.sqrt(profit_ratio)
+        price_factor = (profit_ratio)**0.25
         
         return price_factor
     
@@ -60,7 +60,7 @@ class PriceCalculator:
         current_profit: float,
         base_profit: float,
         volatility: float,
-        mean_reversion_speed: float = 0.15,
+        mean_reversion_speed: float = 0.05,
     ) -> float:
         """
         Рассчитывает цену на следующий тик.
@@ -81,9 +81,9 @@ class PriceCalculator:
         Returns:
             Новая цена
         """
-        noise = self.brownian_noise(volatility, mean_reversion_speed)
+        noise = self.brownian_noise(volatility, mean_reversion_speed) * 1
         
-        profit_factor = self.profit_to_price_factor(current_profit, base_profit)
+        profit_factor = self.profit_to_price_factor(current_profit, base_profit) / 2
         
         trend_impact = (profit_factor - 1) * 0.002
         price_change = noise + trend_impact

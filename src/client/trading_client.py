@@ -66,7 +66,7 @@ class TradingClient:
         """
         Инициализирует клиент.        
         Args:
-            base_url: URL сервера (например, "http://localhost:8000")
+            base_url: URL сервера (например, "http://localhost:8020")
             username: Имя пользователя для активной торговли (опционально)
             timeout: Таймаут запросов в секундах
         """
