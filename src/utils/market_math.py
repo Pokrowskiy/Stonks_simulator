@@ -12,18 +12,18 @@ class PriceCalculator:
         """
         self.rng = np.random.RandomState(seed)
     
-    def brownian_noise(self, volatility: float, mean_reversion_speed: float = 0.05) -> float:
+    def brownian_noise(self, volatility: float, mean_reversion_speed: float = 0.15) -> float:
         """
         Генерирует шум на основе броуновского движения с регрессией к среднему.
         
         Args:
-            volatility: Коэффициент волатильности (напр. 0.15 = 15% за тик)
-            mean_reversion_speed: Скорость возврата к среднему (0.0 - 1.0)
+            volatility: Коэффициент волатильности (напр. 0.15 = 15% за ТИК, но мы снижаем это)
+            mean_reversion_speed: Скорость возврата к среднему (0.0 - 1.0) - УВЕЛИЧЕНА ДО 0.15
             
         Returns:
             Процентное изменение цены (напр. 0.02 = +2%, -0.03 = -3%)
         """
-        brownian_step = self.rng.normal(0, volatility / 2)
+        brownian_step = self.rng.normal(0, volatility / 20)
         
         mean_reversion_pull = -brownian_step * mean_reversion_speed
         
@@ -36,19 +36,21 @@ class PriceCalculator:
         Конвертирует фундаментальную прибыль в мультипликатор цены.
         Если прибыль выше базовой → цена растёт, ниже → падает.
         
+        Использует квадратный корень вместо логарифма для более мягкого влияния.
+        
         Args:
             current_profit: Текущая прибыль компании
             base_profit: Базовая/средняя прибыль (якорь)
             
         Returns:
-            Мультипликатор цены относительно якоря (напр. 1.1 = +10% к тренду)
+            Мультипликатор цены относительно якоря
         """
         if base_profit <= 0:
             return 1.0
         
         profit_ratio = current_profit / base_profit
         
-        price_factor = np.log(profit_ratio + 1) / 2 + 1
+        price_factor = np.sqrt(profit_ratio)
         
         return price_factor
     
@@ -58,7 +60,7 @@ class PriceCalculator:
         current_profit: float,
         base_profit: float,
         volatility: float,
-        mean_reversion_speed: float = 0.05,
+        mean_reversion_speed: float = 0.15,
     ) -> float:
         """
         Рассчитывает цену на следующий тик.
@@ -66,15 +68,14 @@ class PriceCalculator:
         Формула:
             price_new = price_old * (
                 1 +                                      # Базовая цена
-                noise(volatility) +                      # Броуновское движение
-                (profit_factor - 1) * trend_strength    # Фундаментальный тренд
+                noise(volatility) +                      # Броуновское движение (снижено)
+                (profit_factor - 1) * trend_strength    # Фундаментальный тренд (снижено)
             )
-        
         Args:
             current_price: Текущая цена
             current_profit: Текущая прибыль
             base_profit: Базовая прибыль (для регрессии)
-            volatility: Волатильность (0.15 = 15% за тик, но обычно много меньше)
+            volatility: Волатильность
             mean_reversion_speed: Скорость возврата к среднему
             
         Returns:
@@ -84,7 +85,9 @@ class PriceCalculator:
         
         profit_factor = self.profit_to_price_factor(current_profit, base_profit)
         
-        price_change = noise + (profit_factor - 1) * 0.01
+        trend_impact = (profit_factor - 1) * 0.002
+        price_change = noise + trend_impact
+        price_change = max(min(price_change, 0.05), -0.05)
 
         new_price = max(current_price * (1 + price_change), 0.01)
         

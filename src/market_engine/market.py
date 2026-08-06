@@ -261,7 +261,7 @@ class MarketEngine:
         if len(self.index_history) > 1000:
             self.index_history = self.index_history[-1000:]
     
-    def tick(self) -> None:
+    def tick(self) -> Dict[str, float]:
         """
         Основной цикл одного тика.
         Вызывается один раз за виртуальный час (реально за ~0.5 секунд).
@@ -272,6 +272,9 @@ class MarketEngine:
         3. Обновляем эффекты событий (NewsEvent)
         4. Применяем события к компаниям
         5. Обновляем тренд-события
+        
+        Returns:
+            Словарь выплаченных дивидендов {ticker: dividend_per_share}
         """
         self.tick_count += 1
         dividends = self.check_dividends()
@@ -279,6 +282,7 @@ class MarketEngine:
         self.update_events()
         self.apply_events_to_companies()
         self.update_trend_events()
+        return dividends
     
     def get_market_snapshot(self) -> Dict[str, Any]:
         """

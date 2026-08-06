@@ -61,8 +61,12 @@ class Orchestrator:
                     await asyncio.sleep(0.1)
                 
                 # 1. Один тик рынка
-                self.market_engine.tick()
+                dividends = self.market_engine.tick()  # Получаем дивиденды
                 self.tick_count += 1
+                
+                # 1.5. НОВОЕ: Применяем дивиденды сразу (они выплачиваются по расписанию компаний)
+                if dividends:
+                    self.broker.apply_dividends(dividends)
                 
                 # 2. Получаем цены и волатильности
                 prices = {

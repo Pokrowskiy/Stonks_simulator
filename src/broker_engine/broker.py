@@ -318,6 +318,28 @@ class Broker:
     
     # ===== ДНЕВНЫЕ/НЕДЕЛЬНЫЕ ОПЕРАЦИИ =====
     
+    def apply_dividends(self, dividends: Dict[str, float]) -> None:
+        """
+        Применяет дивиденды от компаний к счётам пользователей.
+        
+        Вызывается один раз в день (в конце тика, когда дивиденды выплачены).
+        
+        Args:
+            dividends: Словарь {ticker: dividend_per_share}
+                      (returns from market_engine.check_dividends())
+        """
+        if not dividends:
+            return
+        
+        for account in self.accounts.values():
+            for ticker, dividend_per_share in dividends.items():
+                # Проверяем, есть ли позиция в этом тикере
+                quantity = account.positions.get(ticker, 0)
+                if quantity > 0:  # Только LONG позиции получают дивиденды
+                    dividend_income = quantity * dividend_per_share
+                    account.cash_balance += dividend_income
+                    # print(f"✓ {account.username}: +${dividend_income:.2f} дивиденды {ticker}")
+    
     def on_daily_tick(self, 
                      prices: Dict[str, float],
                      volatilities: Dict[str, float]) -> None:
