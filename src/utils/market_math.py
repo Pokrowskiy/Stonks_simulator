@@ -87,7 +87,7 @@ class PriceCalculator:
         
         trend_impact = (profit_factor - 1) * 0.002
         price_change = noise + trend_impact
-        price_change = max(min(price_change, 0.05), -0.05)
+        price_change = max(min(price_change, 0.08), -0.08)
 
         new_price = max(current_price * (1 + price_change), 0.01)
         

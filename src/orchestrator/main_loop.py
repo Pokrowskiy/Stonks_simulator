@@ -8,6 +8,7 @@ from src.market_engine.market import MarketEngine
 from src.broker_engine.broker import Broker
 from src.state_manager.state_manager import StateManager
 from src.state_manager.state_manager_config import StateManagerConfig
+from src.orchestrator.event_manager import EventManager
 
 
 class Orchestrator:
@@ -33,6 +34,8 @@ class Orchestrator:
         self.is_running = False
         self.tick_count = 0
         self.listeners = []
+
+        self.event_manager = EventManager(config_path="config/events_config.json")
     
     def add_listener(self, callback):
         """Добавляет слушателя для обновлений."""
@@ -60,6 +63,7 @@ class Orchestrator:
                 while not self.is_running:
                     await asyncio.sleep(0.1)
                 
+                self.event_manager.check_and_trigger(self.market_engine.tick_count, self.market_engine)
                 # 1. Один тик рынка
                 dividends = self.market_engine.tick()  # Получаем дивиденды
                 self.tick_count += 1

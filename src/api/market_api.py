@@ -250,11 +250,12 @@ def create_market_router(market_engine: Any) -> APIRouter:
     def get_market_status():
         """Возвращает техническую информацию о рынке."""
         try:
+            total_active_events = len(getattr(market_engine, "events", [])) + len(getattr(market_engine, "trend_events", []))
             return {
                 "status": "running",
                 "tick_count": market_engine.tick_count,
                 "total_companies": len([c for c in market_engine.companies.values() if not c.is_index]),
-                "active_events": len(market_engine.events),
+                "active_events": total_active_events,
                 "index_price": round(market_engine.index_price, 2),
             }
         
@@ -268,29 +269,52 @@ def create_market_router(market_engine: Any) -> APIRouter:
     @router.get(
         "/events",
         summary="Получить активные события",
-        description="Список текущих новостей и событий на рынке"
+        description="Список текущих новостей и трендовых событий на рынке"
     )
     def get_active_events():
-        """Возвращает список активных событий (новостей)."""
+        """Возвращает список активных событий в едином формате для news и trend."""
         try:
             events = []
-            for event in market_engine.events:
+
+            for event in list(getattr(market_engine, "events", [])):
                 impact = event.get_current_impact()
                 events.append({
-                    "event_id": event.event_id,
-                    "name": event.name,
-                    "target_type": event.target_type,
-                    "target_value": event.target_value,
-                    "remaining_ticks": event.remaining_ticks,
-                    "duration_ticks": event.duration_ticks,
+                    "event_id": getattr(event, "event_id", None),
+                    "name": getattr(event, "name", "Unknown event"),
+                    "event_type": "news",
+                    "target_type": getattr(event, "target_type", "market"),
+                    "target_value": getattr(event, "target_value", "MARKET"),
+                    "remaining_ticks": getattr(event, "remaining_ticks", 0),
+                    "duration_ticks": getattr(event, "duration_ticks", 0),
                     "impact_current": round(impact, 2),
+                    "impact_profit": getattr(event, "impact_profit", 0.0),
+                    "impact_volatility": getattr(event, "impact_volatility", 1.0),
+                    "trend_direction": None,
+                    "strength": None,
                 })
-            
+
+            for event in list(getattr(market_engine, "trend_events", [])):
+                impact = event.get_current_impact()
+                events.append({
+                    "event_id": getattr(event, "event_id", None),
+                    "name": getattr(event, "name", "Unknown trend"),
+                    "event_type": "trend",
+                    "target_type": "market",
+                    "target_value": getattr(event, "target_value", "MARKET"),
+                    "remaining_ticks": getattr(event, "remaining_ticks", 0),
+                    "duration_ticks": getattr(event, "duration_ticks", 0),
+                    "impact_current": round(impact, 2),
+                    "impact_profit": 0.0,
+                    "impact_volatility": 1.0,
+                    "trend_direction": getattr(event, "trend_direction", "UP"),
+                    "strength": getattr(event, "strength", 0.0),
+                })
+
             return {
                 "total_active": len(events),
                 "events": events
             }
-        
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,

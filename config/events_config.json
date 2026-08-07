@@ -1,0 +1,268 @@
+{
+  "events": [
+    {
+      "trigger_tick": 24,
+      "name": "Уязвимость смарт-контрактов",
+      "type": "news",
+      "description": "Критическая уязвимость нулевого дня найдена в базовых протоколах FinanceBank. Происходит экстренная заморозка части активов.",
+      "target_type": "company",
+      "target": "BANK",
+      "impact_profit": -2200000,
+      "impact_volatility": 1.05,
+      "duration_ticks": 60,
+      "decay_type": "shock"
+    },
+    {
+      "trigger_tick": 62,
+      "name": "Синтетический белок",
+      "type": "trend",
+      "description": "Новый процесс ферментации удешевляет производство искусственного мяса в 4 раза. FoodBrand захватывает долю рынка.",
+      "target": "FOOD",
+      "trend_direction": "UP",
+      "strength": 0.2,
+      "duration_ticks": 120
+    },
+    {
+      "trigger_tick": 70,
+      "name": "Антимонопольное расследование",
+      "type": "news",
+      "description": "Регуляторы начинают крупное расследование монополизации облачных рынков сектором Tech.",
+      "target_type": "sector",
+      "target": "Tech",
+      "impact_profit": -800000,
+      "impact_volatility": 1.05,
+      "duration_ticks": 60,
+      "decay_type": "linear"
+    },
+    {
+      "trigger_tick": 84,
+      "name": "Генетическая деградация",
+      "type": "news",
+      "description": "В гидропонных комплексах FoodBrand обнаружен синтетический прион, уничтожающий базовые культуры.",
+      "target_type": "company",
+      "target": "FOOD",
+      "impact_profit": -1800000,
+      "impact_volatility": 1.2,
+      "duration_ticks": 20,
+      "decay_type": "shock"
+    },
+    {
+      "trigger_tick": 130,
+      "name": "Сбой магистральных сетей",
+      "type": "trend",
+      "description": "Каскадное отключение электроэнергии в промышленном кластере из-за износа инфраструктуры. PowerCorp теряет контракты.",
+      "target": "PWR",
+      "trend_direction": "DOWN",
+      "strength": 0.5,
+      "duration_ticks": 80
+    },
+    {
+      "trigger_tick": 165,
+      "name": "Глобальное повышение ставки",
+      "type": "news",
+      "description": "Центробанки синхронно повышают базовые ставки для борьбы со скрытой инфляцией. Деньги становятся 'дорогими'.",
+      "target_type": "market",
+      "target": "MARKET",
+      "impact_profit": -500000,
+      "impact_volatility": 1.05,
+      "duration_ticks": 24,
+      "decay_type": "linear"
+    },
+    {
+      "trigger_tick": 190,
+      "name": "Квантовое шифрование",
+      "type": "news",
+      "description": "FinanceBank первым успешно внедряет квантовое распределение ключей, становясь самым безопасным банком в мире.",
+      "target_type": "company",
+      "target": "BANK",
+      "impact_profit": 1000000,
+      "impact_volatility": 1.05,
+      "duration_ticks": 80,
+      "decay_type": "shock"
+    },
+    {
+      "trigger_tick": 235,
+      "name": "Прорыв в терапии нейрогенеза",
+      "type": "trend",
+      "description": "Новые препараты PharmaCorp показывают небывалую эффективность в восстановлении нейронных связей.",
+      "target": "PHARMA",
+      "trend_direction": "UP",
+      "strength": 0.2,
+      "duration_ticks": 80
+    },
+    {
+      "trigger_tick": 244,
+      "name": "Дефицит редкоземельных металлов",
+      "type": "news",
+      "description": "Из-за геополитического кризиса прекращаются поставки ключевых компонентов для серверного оборудования.",
+      "target_type": "company",
+      "target": "GIGA",
+      "impact_profit": -1800000,
+      "impact_volatility": 1.05,
+      "duration_ticks": 70,
+      "decay_type": "linear"
+    },
+    {
+      "trigger_tick": 315,
+      "name": "Токсичный метаболит",
+      "type": "trend",
+      "description": "Отсроченные побочные эффекты флагманского ноотропа PharmaCorp приводят к началу масштабного расследования. Доверие инвесторов стремительно падает.",
+      "target": "PHARMA",
+      "trend_direction": "DOWN",
+      "strength": 1.85,
+      "duration_ticks": 30
+    },
+    {
+      "trigger_tick": 310,
+      "name": "Загрязнение водоносного горизонта",
+      "type": "trend",
+      "description": "Скандал в агропромышленном комплексе. Потребительский сектор отказывается от продукции крупных ритейлеров.",
+      "target": "Consumer",
+      "trend_direction": "DOWN",
+      "strength": 0.8,
+      "duration_ticks": 90
+    },
+    {
+      "trigger_tick": 380,
+      "name": "Успех термоядерного прототипа",
+      "type": "news",
+      "description": "Дочернее предприятие PowerCorp удерживает плазму в реакторе Q>1 на протяжении 10 часов. Исторический прорыв в энергетике.",
+      "target_type": "company",
+      "target": "PWR",
+      "impact_profit": 3000000,
+      "impact_volatility": 1.05,
+      "duration_ticks": 30,
+      "decay_type": "shock"
+    },
+    {
+      "trigger_tick": 430,
+      "name": "Бычий забег алгоритмов",
+      "type": "trend",
+      "description": "Институциональные нейросети синхронно начинают скупать активы, формируя сильный позитивный тренд на всем рынке.",
+      "target": "MARKET",
+      "trend_direction": "UP",
+      "strength": 0.2,
+      "duration_ticks": 50
+    },
+    {
+      "trigger_tick": 510,
+      "name": "Патентный обрыв",
+      "type": "news",
+      "description": "Истекает срок действия патента на самый прибыльный препарат PharmaCorp. Рынок наводняют дешевые дженерики.",
+      "target_type": "company",
+      "target": "PHARMA",
+      "impact_profit": -2000000,
+      "impact_volatility": 1.05,
+      "duration_ticks": 40,
+      "decay_type": "linear"
+    },
+    {
+      "trigger_tick": 550,
+      "name": "Агро-автоматизация",
+      "type": "trend",
+      "description": "FoodBrand внедряет полностью автономные роботизированные фермы, драматически снижая издержки.",
+      "target": "FOOD",
+      "trend_direction": "UP",
+      "strength": 0.2,
+      "duration_ticks": 60
+    },
+    {
+      "trigger_tick": 580,
+      "name": "Эпидемия резистентного вируса",
+      "type": "news",
+      "description": "Новый штамм, устойчивый к антибиотикам, вызывает панику. Сектор здравоохранения получает экстренное госфинансирование.",
+      "target_type": "sector",
+      "target": "Healthcare",
+      "impact_profit": 2500000,
+      "impact_volatility": 1.05,
+      "duration_ticks": 80,
+      "decay_type": "linear"
+    },
+    {
+      "trigger_tick": 600,
+      "name": "Алгоритмический пузырь невыплат",
+      "type": "trend",
+      "description": "Скоринговые системы выдали миллионы ничем не обеспеченных займов бот-сетям. Назревает катастрофический каскад дефолтов в банковской сфере.",
+      "target": "BANK",
+      "trend_direction": "DOWN",
+      "strength": 0.8,
+      "duration_ticks": 30
+    },
+    {
+      "trigger_tick": 630,
+      "name": "Утечка архитектуры ИИ",
+      "type": "trend",
+      "description": "Исходные коды новой когнитивной модели GigaTech попадают в открытый доступ. Уникальность технологии утеряна.",
+      "target": "GIGA",
+      "trend_direction": "DOWN",
+      "strength": 0.95,
+      "duration_ticks": 80
+    },
+    {
+      "trigger_tick": 640,
+      "name": "Дефолт суверенного фонда",
+      "type": "news",
+      "description": "Крупный государственный фонд объявляет о неплатежеспособности. Банковский сектор терпит колоссальные убытки по облигациям.",
+      "target_type": "sector",
+      "target": "Banking",
+      "impact_profit": -3500000,
+      "impact_volatility": 1.05,
+      "duration_ticks": 50,
+      "decay_type": "shock"
+    },
+    {
+      "trigger_tick": 720,
+      "name": "Глобальный климатический мандат",
+      "type": "trend",
+      "description": "Мировые правительства вводят жесткие углеродные квоты. Переход на 'зеленую' энергию становится принудительным.",
+      "target": "PWR",
+      "trend_direction": "UP",
+      "strength": 0.2,
+      "duration_ticks": 60
+    },
+    {
+      "trigger_tick": 2350,
+      "name": "Синдикатный картель",
+      "type": "trend",
+      "description": "Теневые корпоративные синдикаты начинают скоординированный шорт-сквиз наоборот, агрессивно выкачивая ликвидность из официальных бирж.",
+      "target": "MARKET",
+      "trend_direction": "DOWN",
+      "strength": 0.9,
+      "duration_ticks": 50
+    },
+    {
+      "trigger_tick": 780,
+      "name": "Кризис перепроизводства ИИ",
+      "type": "news",
+      "description": "Предложение облачных вычислительных мощностей превысило спрос. Стоимость аренды серверов GigaTech падает.",
+      "target_type": "company",
+      "target": "GIGA",
+      "impact_profit": -900000,
+      "impact_volatility": 1.05,
+      "duration_ticks": 90,
+      "decay_type": "linear"
+    },
+    {
+      "trigger_tick": 790,
+      "name": "Кризис ликвидности",
+      "type": "trend",
+      "description": "Изъятие корпоративных депозитов приводит к медленному истощению резервов FinanceBank.",
+      "target": "BANK",
+      "trend_direction": "DOWN",
+      "strength": 0.5,
+      "duration_ticks": 80
+    },
+    {
+      "trigger_tick": 850,
+      "name": "Алгоритмический флэш-крэш",
+      "type": "news",
+      "description": "Ошибка в высокочастотных торговых алгоритмах вызывает цепную реакцию распродаж по всему рынку. Тотальный хаос на биржах.",
+      "target_type": "market",
+      "target": "MARKET",
+      "impact_profit": -4000000,
+      "impact_volatility": 4.0,
+      "duration_ticks": 48,
+      "decay_type": "shock"
+    }
+  ]
+}

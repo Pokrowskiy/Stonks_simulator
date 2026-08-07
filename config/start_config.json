@@ -7,7 +7,7 @@
       "sectors": ["Tech", "AI", "Cloud"],
       "price_initial": 150.0,
       "volatility": 0.1,
-      "profit_base": 500000.0,
+      "profit_base": 5000000.0,
       "profit_growth": 1000.0,
       "div_payout_ratio": 0.5,
       "div_period_ticks": 168
@@ -19,7 +19,7 @@
       "sectors": ["Energy", "Green", "Infrastructure"],
       "price_initial": 45.0,
       "volatility": 0.08,
-      "profit_base": 300000.0,
+      "profit_base": 3000000.0,
       "profit_growth": 500.0,
       "div_payout_ratio": 0.4,
       "div_period_ticks": 168
@@ -31,7 +31,7 @@
       "sectors": ["Finance", "Banking"],
       "price_initial": 200.0,
       "volatility": 0.05,
-      "profit_base": 800000.0,
+      "profit_base": 8000000.0,
       "profit_growth": 2000.0,
       "div_payout_ratio": 0.6,
       "div_period_ticks": 168
@@ -43,7 +43,7 @@
       "sectors": ["Consumer", "Food", "Retail"],
       "price_initial": 75.0,
       "volatility": 0.1,
-      "profit_base": 400000.0,
+      "profit_base": 4000000.0,
       "profit_growth": 800.0,
       "div_payout_ratio": 0.55,
       "div_period_ticks": 168
@@ -55,7 +55,7 @@
       "sectors": ["Healthcare", "Pharma", "Biotech"],
       "price_initial": 120.0,
       "volatility": 0.22,
-      "profit_base": 600000.0,
+      "profit_base": 6000000.0,
       "profit_growth": 1200.0,
       "div_payout_ratio": 0.45,
       "div_period_ticks": 168
